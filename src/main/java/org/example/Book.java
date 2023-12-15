@@ -2,88 +2,75 @@ package org.example;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 public class Book {
-    String Book_Name, Book_Author, Category;
-     float BookPrice = 0.0f;
-
-    public Book(String book_Name, String book_Author, float bookPrice, Date published, String category) {
-        Book_Name = book_Name;
-        Book_Author = book_Author;
-        BookPrice = bookPrice;
-        this.published = published;
-        Category = category;
-
-    }
-
-    public Book(BufferedReader buff){
-        try {
-            System.out.println("Enter the Book Name:");
-            String bookName = buff.readLine();
-
-            System.out.println("Enter the Author:");
-            String author = buff.readLine();
-
-            System.out.println("Enter the Book Price:");
-            float price = Float.parseFloat(buff.readLine());
-
-            System.out.println("Enter the Category:");
-            String category = buff.readLine();
-
-            java.util.Date publishedDate = new java.util.Date();
-
-
-//            Book newBook = new Book(bookName, author, price, publishedDate, category);
-
-            System.out.println("Book added successfully!");
-        } catch (IOException | NumberFormatException e) {
+    public String bookName, bookAuthor, bookCategory;
+    Date bookPublishDate;
+    int bookCost = 0;
+    public Book(BufferedReader buff) throws Exception{
+        String bookName="";
+        String bookAuthor="";
+        Date bookPublishDate = null;
+        String bookCategory="";
+        int bookCost = 0;
+        System.out.print("Enter book's name: ");
+        try{
+            bookName = buff.readLine();
+        }
+        catch (IOException e){
             e.printStackTrace();
         }
+        this.bookName = bookName;
+        System.out.print("Enter author's name: ");
+        try{
+            bookAuthor = buff.readLine();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        this.bookAuthor = bookAuthor;
+        System.out.print("Enter publishing date in (YYYY-MM-DD) format: ");
+        try{
+            String bookPublishD = buff.readLine();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            bookPublishDate = sdf.parse(bookPublishD);
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        this.bookPublishDate = bookPublishDate;
+        System.out.print("Enter book's category: ");
+        try{
+            bookCategory = buff.readLine();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        this.bookCategory = bookCategory;
+        System.out.print("Enter book's cost: ");
+        try{
+            bookCost = Integer.parseInt(buff.readLine());
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        this.bookCost = bookCost;
     }
-
-
-    public String getBook_Name() {
-        return Book_Name;
+    String getBookName(){
+        return this.bookName;
     }
-
-    public void setBook_Name(String book_Name) {
-        Book_Name = book_Name;
+    String getBookAuthor(){
+        return bookAuthor;
     }
-    public String getCategory() {
-        return Category;
+    Date getBookPublishDate(){
+        return bookPublishDate;
     }
-
-    public void setCategory(String Category) {
-        Category = Category;
+    String getBookCategory(){
+        return bookCategory;
     }
-
-
-    public String getBook_Author() {
-        return Book_Author;
+    int getBookCost(){
+        return bookCost;
     }
-
-    public void setBook_Author(String book_Author) {
-        Book_Author = book_Author;
-    }
-
-    public float getBookPrice() {
-        return BookPrice;
-    }
-
-    public void setBookPrice(float bookPrice) {
-        BookPrice = bookPrice;
-    }
-
-    public Date getPublished() {
-        return published;
-    }
-
-    public void setPublished(Date published) {
-        this.published = published;
-    }
-
-    Date published;
 }

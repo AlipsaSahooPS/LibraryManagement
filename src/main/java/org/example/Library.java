@@ -2,229 +2,451 @@ package org.example;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.*;
 import java.util.Objects;
 
 public class Library implements Stock {
-    BufferedReader buff;
-    InputStreamReader isr;
-    boolean flag = true;
-    static int choice;
-    ArrayList<Book> allBook = new ArrayList<Book>();
+    public static int counter = 1;
 
-    public Library() {
-        isr = new InputStreamReader(System.in);
-        buff = new BufferedReader(isr);
-
-//        for (int i = 1; i <= 10; i++) {
-//            String Book_Name = "Book" + i;
-//            String Book_Author = "Author" + i;
-//            float BookPrice = i * 10.0f;
-//            java.util.Date publishedDate = new java.util.Date();
-//
-//            Book book = new Book(Book_Name, Book_Author, BookPrice, publishedDate);
-//            allBook.add(book);
-//        }
-    }
-
-//    public static void main(String[] args) {
-//        Library obj = new Library();
-//        obj.showMenu();
-//    }
-
-    public void showMenu() {
-        while (flag) {
-            System.out.println("Welcome to Library");
-            System.out.println("Select the operations you want to perform \n1. Add Book \n2. Update Book \n3. Delete Book \n4. Print All Books \n5. Exit");
-
-            try {
-                // Read user's choice
-                choice = Integer.parseInt(buff.readLine());
-                Book book;
-                // Process the user's choice
-                switch (choice) {
-                    case 1:
-                        System.out.println("Add Book operation selected");
-                        book = new Book(buff);
-                        addBook(book);
-                        break;
-                    case 2:
-                        System.out.println("Update Book operation selected");
-                        book = new Book(buff);
-                        updateBook(book);
-                        break;
-                    case 3:
-                        System.out.println("Delete Book operation selected");
-//                        deleteBook(book);
-                        break;
-                    case 4:
-                        System.out.println("Print All Books operation selected");
-                        printAllBooks();
-                        break;
-                    case 5:
-                        System.out.println("Exiting the Library");
-                        flag = false;
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please select a valid option.");
-                        flag = false; // Stop the infinite loop for an invalid choice
-                        break;
+    public Library(BufferedReader buff,Connection connection, int choice) throws Exception {
+        boolean check_flag;
+        Statement statement;
+        ResultSet rs;
+        int bookID = 0;
+        switch (choice){
+            case 1:
+                System.out.println("Enter details of your book:");
+                check_flag = true;
+                while(check_flag) {
+                    Book book = new Book(buff);
+                    createBook(book,connection);
+                    System.out.print("Do you want to add another book? (yes/no) ");
+                    String choice_flag = "";
+                    try{
+                        choice_flag = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    if(Objects.equals(choice_flag, "no")) {
+                        check_flag = false;
+                    }
                 }
-            } catch (IOException | NumberFormatException e) {
-                e.printStackTrace();
+                break;
+            case 2:
+                check_flag = true;
+                while(check_flag) {
+                    System.out.print("Enter your BookID: ");
+                    try{
+                        bookID = Integer.parseInt(buff.readLine());
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    // Check bookId is correct or not
+                    String book_exists = "select count(*) as book_count from books where book_id = ";
+                    book_exists += bookID;
+                    statement = connection.createStatement();
+                    rs = statement.executeQuery(book_exists);
+                    rs.next();
+                    if(rs.getInt(1) == 0){
+                        System.out.println("This book didn't exists please type correct id");
+                        System.out.print("Do you want to update another book? (yes/no) ");
+                        String choice_flag = "";
+                        try{
+                            choice_flag = buff.readLine();
+                        }
+                        catch (IOException e){
+                            e.printStackTrace();
+                        }
+                        if(Objects.equals(choice_flag, "no")) {
+                            check_flag = false;
+                            continue;
+                        }
+                    }
+
+                    Book book = new Book(buff);
+                    updateBook(book,connection,bookID);
+                    System.out.print("Do you want to update another book? (yes/no) ");
+                    String choice_flag = "";
+                    try{
+                        choice_flag = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    if(Objects.equals(choice_flag, "no")) {
+                        check_flag = false;
+                    }
+                }
+                break;
+            case 3:
+                check_flag = true;
+                while(check_flag) {
+                    System.out.print("Enter your BookID: ");
+                    try{
+                        bookID = Integer.parseInt(buff.readLine());
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    // Check bookId is correct or not
+                    String book_delete = "select count(*) as book_count from books where book_id = ";
+                    book_delete += bookID;
+                    statement = connection.createStatement();
+                    rs = statement.executeQuery(book_delete);
+                    rs.next();
+                    if(rs.getInt(1) == 0){
+                        System.out.println("This book didn't exists please type correct id");
+                        return;
+                    }
+                    deleteBook(connection,bookID);
+                    System.out.print("Do you want to delete another book? (yes/no) ");
+                    String choice_flag = "";
+                    try{
+                        choice_flag = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    if(Objects.equals(choice_flag, "no")) {
+                        check_flag = false;
+                    }
+                }
+                break;
+            case 4:
+                System.out.print("Enter your book's name: ");
+                check_flag = true;
+                while(check_flag) {
+                    String bookName="";
+                    try{
+                        bookName = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    findBookByName(connection,bookName);
+                    System.out.print("Do you want to search another book? (yes/no) ");
+                    String choice_flag = "";
+                    try{
+                        choice_flag = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    if(Objects.equals(choice_flag, "no")) {
+                        check_flag = false;
+                    }
+                }
+                break;
+            case 5:
+                System.out.print("Enter your book's cost: ");
+                check_flag = true;
+                while(check_flag) {
+                    int bookCost=0;
+                    try{
+                        bookCost = Integer.parseInt(buff.readLine());
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    findBookByCost(connection,bookCost);
+                    System.out.print("Do you want to search another book? (yes/no) ");
+                    String choice_flag = "";
+                    try{
+                        choice_flag = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    if(Objects.equals(choice_flag, "no")) {
+                        check_flag = false;
+                    }
+                }
+                break;
+            case 6:
+                check_flag = true;
+                while(check_flag) {
+                    System.out.print("Enter your book's category: ");
+                    String bookCategory = "";
+                    try{
+                        bookCategory = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    findBookByCategory(connection,bookCategory);
+                    System.out.print("Do you want to search another book? (yes/no) ");
+                    String choice_flag = "";
+                    try{
+                        choice_flag = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    if(Objects.equals(choice_flag, "no")) {
+                        check_flag = false;
+                    }
+                }
+                break;
+            case 7:
+                check_flag = true;
+                while(check_flag) {
+                    System.out.print("Enter your book's starting cost: ");
+                    int bookStartingCost = 0, bookEndingCost = 0;
+                    try{
+                        bookStartingCost = Integer.parseInt(buff.readLine());
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    System.out.print("Enter your book's ending cost: ");
+                    try{
+                        bookEndingCost = Integer.parseInt(buff.readLine());
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    findBookByCostRange(connection,bookStartingCost,bookEndingCost);
+                    System.out.print("Do you want to search another book? (yes/no) ");
+                    String choice_flag = "";
+                    try{
+                        choice_flag = buff.readLine();
+                    }
+                    catch (IOException e){
+                        e.printStackTrace();
+                    }
+                    if(Objects.equals(choice_flag, "no")) {
+                        check_flag = false;
+                    }
+                }
+                break;
+            case 8:
+                System.out.println("Costliest book in this library is: " + findCostliestBook(connection));
+                break;
+            case 9:
+                System.out.println("Cheapest book in this library is: " + findCheapestBook(connection));
+                break;
+            case 10:
+                int year = 0;
+                System.out.print("Enter year that old books you want to delete: ");
+                try{
+                    year = Integer.parseInt(buff.readLine());
+                }
+                catch (IOException e){
+                    e.printStackTrace();
+                }
+                System.out.println("Successfully deleted " + deleteOldBooks(connection,year) + " books");
+                break;
+            default:
+        }
+    }
+
+    public static void endMessage(){
+    }
+
+    @Override
+    public void createBook(Book book, Connection connection) {
+        int bookID = counter++;
+        String bookName = book.getBookName();
+        String bookAuthor = book.getBookAuthor();
+        java.sql.Date bookPublishDate = new java.sql.Date(book.getBookPublishDate().getTime());
+        String bookCategory = book.getBookCategory();
+        int bookCost = book.getBookCost();
+        try{
+            String book_exists = "select count(*) as book_count from books where book_id = '"+bookID+"'";
+            Statement statement = connection.createStatement();
+            ResultSet rs = statement.executeQuery(book_exists);
+            rs.next();
+            if(rs.getInt(1) > 0){
+                System.out.println("This book already exists please add another book");
+                return;
             }
+            PreparedStatement book_add = connection.prepareStatement("insert into books values(?,?,?,?,?,?)");
+            book_add.setInt(1,bookID);
+            book_add.setString(2,bookName);
+            book_add.setString(3,bookAuthor);
+            book_add.setDate(4,bookPublishDate);
+            book_add.setString(5,bookCategory);
+            book_add.setInt(6,bookCost);
+            book_add.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Your bookID is: " + bookID);
+    }
+
+    @Override
+    public void updateBook(Book book, Connection connection, int bookID) {
+        // Remove Book
+        try{
+            PreparedStatement book_remove = connection.prepareStatement("select * from books where book_name = '"+bookID+"'");
+            ResultSet resultSet = book_remove.executeQuery();
+            resultSet.next();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        // Add Book
+        String bookName = book.getBookName();
+        String bookAuthor = book.getBookAuthor();
+        java.sql.Date bookPublishDate = new java.sql.Date(book.getBookPublishDate().getTime());
+        String bookCategory = book.getBookCategory();
+        int bookCost = book.getBookCost();
+        try{
+            PreparedStatement book_add = connection.prepareStatement("insert into books values(?,?,?,?,?,?)");
+            book_add.setInt(1,bookID);
+            book_add.setString(2,bookName);
+            book_add.setString(3,bookAuthor);
+            book_add.setDate(4,bookPublishDate);
+            book_add.setString(5,bookCategory);
+            book_add.setInt(6,bookCost);
+            book_add.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void addBook(Book book) {
-        allBook.add(book);
+    public void deleteBook(Connection connection, int bookID) {
+        try{
+            PreparedStatement book_remove = connection.prepareStatement("select * from books where book_name = '"+bookID+"'");
+            ResultSet resultSet = book_remove.executeQuery();
+            resultSet.next();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void updateBook(Book book) {
+    public void findBookByName(Connection connection, String bookName){
         try {
-            System.out.println("Enter the index of the book you want to update:");
-            int index = Integer.parseInt(buff.readLine());
-
-            if (index >= 0 && index < allBook.size()) {
-                Book existingBook = allBook.get(index);
-
-                System.out.println("Enter the new Book Name:");
-                String newBookName = buff.readLine();
-
-                System.out.println("Enter the new Author:");
-                String newAuthor = buff.readLine();
-
-                System.out.println("Enter the new Book Price:");
-                float newPrice = Float.parseFloat(buff.readLine());
-
-                // Update the book details
-                existingBook.setBook_Name(newBookName);
-                existingBook.setBook_Author(newAuthor);
-                existingBook.setBookPrice(newPrice);
-
-                System.out.println("Book updated successfully!");
-            } else {
-                System.out.println("Invalid index. Please enter a valid index.");
+            PreparedStatement book_find = connection.prepareStatement("select * from books where book_name = '"+bookName+"'");
+            ResultSet resultSet = book_find.executeQuery();
+            int book_counter = 1;
+            while (resultSet.next()){
+                System.out.println("Book: " + book_counter++);
+                System.out.println("book_id: " + resultSet.getInt(1) +
+                        "\nbook_name: " + resultSet.getString(2) +
+                        "\nbook_author: " + resultSet.getString(3) +
+                        "\nbook_publish_date: " + resultSet.getDate(4) +
+                        "\nbook_category: " + resultSet.getString(5) +
+                        "\nbook_cost: " + resultSet.getInt(6)
+                );
+                System.out.println("------------------------------");
             }
-        } catch (IOException | NumberFormatException e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void deleteBook(Book book) {
+    public void findBookByCost(Connection connection, int bookCost){
         try {
-            System.out.println("Enter the index of the book you want to delete:");
-            int index = Integer.parseInt(buff.readLine());
-
-            if (index >= 0 && index < allBook.size()) {
-                Book deletedBook = allBook.remove(index);
-                System.out.println("Book deleted successfully: " + deletedBook.getBook_Name());
-            } else {
-                System.out.println("Invalid index. Please enter a valid index.");
+            PreparedStatement book_find = connection.prepareStatement("select * from books where book_cost = "+ bookCost);
+            ResultSet resultSet = book_find.executeQuery();
+            int book_counter = 1;
+            while (resultSet.next()){
+                System.out.println("Book: " + book_counter++);
+                System.out.println("book_id: " + resultSet.getInt(1) +
+                        "\nbook_name: " + resultSet.getString(2) +
+                        "\nbook_author: " + resultSet.getString(3) +
+                        "\nbook_publish_date: " + resultSet.getDate(4) +
+                        "\nbook_category: " + resultSet.getString(5) +
+                        "\nbook_cost: " + resultSet.getInt(6)
+                );
+                System.out.println("------------------------------");
             }
-        } catch (IOException | NumberFormatException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    void printAllBooks() {
-        System.out.println("List of Books in the Library:");
-        for (Book book : allBook) {
-            System.out.println("Book Name: " + book.getBook_Name());
-            System.out.println("Author: " + book.getBook_Author());
-            System.out.println("Price: " + book.getBookPrice());
-            System.out.println("Published Date: " + book.getPublished());
-            System.out.println();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void findBooksBySearch() {
-        System.out.println("Select search criteria: \n1. By Name \n2. By Cost \n3. By Category \n4. By Cost Range");
+    public void findBookByCategory(Connection connection, String bookCategory){
         try {
-            int searchChoice = Integer.parseInt(buff.readLine());
-
-            switch (searchChoice) {
-                case 1:
-                    System.out.println("Enter the name of the book:");
-                    String searchName = buff.readLine();
-                    var booksByName = findBooksByName(searchName);
-                    displaySearchResults(booksByName);
-                    if (Objects.equals(booksByName, "Not Found")) System.out.println("Not Found");
-                    break;
-                case 2:
-                    System.out.println("Enter the cost of the book:");
-                    float searchCost = Float.parseFloat(buff.readLine());
-                    var booksByCost = findBooksByCost(searchCost);
-                    displayBookCost(booksByCost);
-                    break;
-                case 3:
-                    System.out.println("Enter the category of the book:");
-                    String searchCategory = buff.readLine();
-                    var booksByCategory = findBooksByCategory(searchCategory);
-                    displayBookCategory(booksByCategory);
-                    break;
-                case 4:
-                    System.out.println("Enter the minimum cost:");
-                    float minCost = Float.parseFloat(buff.readLine());
-                    System.out.println("Enter the maximum cost:");
-                    float maxCost = Float.parseFloat(buff.readLine());
-                    var booksInCostRange = findBooksInCostRange(minCost, maxCost);
-                    displayBookCostRange(booksInCostRange);
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please select a valid search criteria.");
+            PreparedStatement book_find = connection.prepareStatement("select * from books where book_category = '"+bookCategory+"'");
+            ResultSet resultSet = book_find.executeQuery();
+            int book_counter = 1;
+            while (resultSet.next()){
+                System.out.println("Book: " + book_counter++);
+                System.out.println("book_id: " + resultSet.getInt(1) +
+                        "\nbook_name: " + resultSet.getString(2) +
+                        "\nbook_author: " + resultSet.getString(3) +
+                        "\nbook_publish_date: " + resultSet.getDate(4) +
+                        "\nbook_category: " + resultSet.getString(5) +
+                        "\nbook_cost: " + resultSet.getInt(6)
+                );
+                System.out.println("------------------------------");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public float findBooksInCostRange(float minCost, float maxCost) {
-        return 0f;
-    }
-
-    public String findBooksByCategory(String searchCategory) {
-        return "Alipsa";
-    }
-
-    public float findBooksByCost(float searchCost) {
-        return 0f;
-    }
-
-
-    public String findBooksByName(String searchName) {
-        for (Book book : allBook) {
-            if (book.getBook_Name().equalsIgnoreCase(searchName)) {
-                return book.getBook_Name();
+    @Override
+    public void findBookByCostRange(Connection connection, int bookStartingCost, int bookEndingCost){
+        try {
+            PreparedStatement book_find = connection.prepareStatement("select * from books where book_cost between " + bookStartingCost + " and " + bookEndingCost);
+            ResultSet resultSet = book_find.executeQuery();
+            int book_counter = 1;
+            while (resultSet.next()){
+                System.out.println("Book: " + book_counter++);
+                System.out.println("book_id: " + resultSet.getInt(1) +
+                        "\nbook_name: " + resultSet.getString(2) +
+                        "\nbook_author: " + resultSet.getString(3) +
+                        "\nbook_publish_date: " + resultSet.getDate(4) +
+                        "\nbook_category: " + resultSet.getString(5) +
+                        "\nbook_cost: " + resultSet.getInt(6)
+                );
+                System.out.println("------------------------------");
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-        return "Not Found";
-
-
     }
 
-    public float displayBookCost(Float booksByCost) {
-
-        return 0f;
+    @Override
+    public String findCostliestBook(Connection connection){
+        String costliest_book;
+        try {
+            PreparedStatement book_find = connection.prepareStatement("select * from books order by book_cost desc limit 1");
+            ResultSet resultSet = book_find.executeQuery();
+            resultSet.next();
+            costliest_book = resultSet.getString(2);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return costliest_book;
     }
 
-    public String displaySearchResults(String booksByName) {
-        return "Alipsa";
+    @Override
+    public String findCheapestBook(Connection connection){
+        String cheapest_book;
+        try {
+            PreparedStatement book_find = connection.prepareStatement("select * from books order by book_cost asc limit 1");
+            ResultSet resultSet = book_find.executeQuery();
+            resultSet.next();
+            cheapest_book = resultSet.getString(2);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return cheapest_book;
     }
 
-    public  String displayBookCategory(String booksByCategory){
-        return "Alipsa";
-    }
-    public float displayBookCostRange(float booksInCostRange) {
-        return 0f;
-    }
+    @Override
+    public int deleteOldBooks(Connection connection, int year){
+        int deleted_books_count = 0;
+        try {
+            PreparedStatement book_find = connection.prepareStatement("select count(*) as book_count from books where book_publish_date <= curdate() - interval "+year+" year");
+            ResultSet resultSet = book_find.executeQuery();
+            resultSet.next();
+            deleted_books_count = resultSet.getInt(1);
 
+            book_find = connection.prepareStatement("delete from books where book_publish_date <= curdate() - interval "+year+" year");
+            book_find.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return deleted_books_count;
+    }
 }
-
